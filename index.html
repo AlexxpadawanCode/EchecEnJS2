@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessJS 2.0</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <div class="chessBoard">
+        <!--8th rank-->
+        <div class="box w">
+            <div class="location rank bTxt">8</div>
+            <div class="piece rook" color="black">
+                <img src="./assets/img/Black-Rook.png" alt="Rook">
+            </div>
+        </div>
+        <div class="box b">
+            <div class="piece knight" color="black">
+                <img src="./assets/img/Black-Knight.png" alt="Knight">
+            </div>
+        </div>
+        <div class="box w">
+            <div class="piece bishop" color="black">
+                <img src="./assets/img/Black-Bishop.png" alt="Bishop">
+            </div>
+        </div>
+        <div class="box b">
+            <div class="piece queen" color="black">
+                <img src="./assets/img/Black-Queen.png" alt="Queen">
+            </div>
+        </div>
+        <div class="box w">
+            <div class="piece king" color="black">
+                <img src="./assets/img/Black-King.png" alt="King">
+            </div>
+        </div>
+        <div class="box b">
+            <div class="piece bishop" color="black">
+                <img src="./assets/img/Black-Bishop.png" alt="Bishop">
+            </div>
+        </div>
+        <div class="box w">
+            <div class="piece knight" color="black">
+                <img src="./assets/img/Black-Knight.png" alt="Knight">
+            </div>
+        </div>
+        <div class="box b">
+            <div class="piece rook" color="black">
+                <img src="./assets/img/Black-Rook.png" alt="Rook">
+            </div>
+        </div>
+        <!--7th rank-->
+        <div class="box b">
+            <div class="location rank wTxt">7</div>
+            <div class="piece pawn" color="black">
+                <img src="./assets/img/Black-Pawn.png" alt="Pawn">
+            </div>
+        </div>
+        <div class="box w"><div class="piece pawn" color="black">
+                <img src="./assets/img/Black-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box b"><div class="piece pawn" color="black">
+                <img src="./assets/img/Black-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box w"><div class="piece pawn" color="black">
+                <img src="./assets/img/Black-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box b"><div class="piece pawn" color="black">
+                <img src="./assets/img/Black-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box w"><div class="piece pawn" color="black">
+                <img src="./assets/img/Black-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box b"><div class="piece pawn" color="black">
+                <img src="./assets/img/Black-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box w"><div class="piece pawn" color="black">
+                <img src="./assets/img/Black-Pawn.png" alt="Pawn">
+            </div></div>
+        <!--6th rank-->
+        <div class="box w">
+            <div class="location rank bTxt">6</div>
+        </div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <!--5th rank-->
+        <div class="box b">
+            <div class="location rank wTxt">5</div>
+        </div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <!--4th rank-->
+        <div class="box w">
+            <div class="location rank bTxt">4</div>
+        </div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <!--3rd rank-->
+        <div class="box b">
+            <div class="location rank wTxt">3</div>
+        </div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <div class="box b"></div>
+        <div class="box w"></div>
+        <!--2nd rank-->
+        <div class="box w">
+            <div class="location rank bTxt">2</div>
+            <div class="piece pawn" color="white">
+                <img src="./assets/img/White-Pawn.png" alt="Pawn">
+            </div>
+        </div>
+        <div class="box b"><div class="piece pawn" color="white">
+                <img src="./assets/img/White-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box w"><div class="piece pawn" color="white">
+                <img src="./assets/img/White-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box b"><div class="piece pawn" color="white">
+                <img src="./assets/img/White-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box w"><div class="piece pawn" color="white">
+                <img src="./assets/img/White-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box b"><div class="piece pawn" color="white">
+                <img src="./assets/img/White-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box w"><div class="piece pawn" color="white">
+                <img src="./assets/img/White-Pawn.png" alt="Pawn">
+            </div></div>
+        <div class="box b">
+            <div class="piece pawn" color="white">
+                <img src="./assets/img/White-Pawn.png" alt="Pawn">
+            </div>
+        </div>
+        <!--1st rank-->
+        <div class="box b">
+            <div class="location wTxt">a</div>
+            <div class="location rank wTxt">1</div>
+            <div class="piece rook" color="white">
+                <img src="./assets/img/White-Rook.png" alt="Rook">
+            </div>
+        </div>
+        <div class="box w">
+            <div class="location bTxt">b</div>
+            <div class="piece knight" color="white">
+                <img src="./assets/img/White-Knight.png" alt="Knight">
+            </div>
+
+        </div>
+        <div class="box b">
+            <div class="location wTxt">c</div>
+            <div class="piece bishop" color="white">
+                <img src="./assets/img/White-Bishop.png" alt="Bishop">
+            </div>
+        </div>
+        <div class="box w">
+            <div class="location bTxt">d</div>
+            <div class="piece queen" color="white">
+                <img src="./assets/img/White-Queen.png" alt="Queen">
+            </div>
+        </div>
+        <div class="box b">
+            <div class="location wTxt">e</div>
+            <div class="piece king" color="white">
+                <img src="./assets/img/White-King.png" alt="King">
+            </div>
+        </div>
+        <div class="box w">
+            <div class="location bTxt">f</div>
+            <div class="piece bishop" color="white">
+                <img src="./assets/img/White-Bishop.png" alt="Bishop">
+            </div>
+        </div>
+        <div class="box b">
+            <div class="location wTxt">g</div>
+            <div class="piece knight" color="white">
+                <img src="./assets/img/White-Knight.png" alt="Knight">
+            </div>
+        </div>
+        <div class="box w">
+            <div class="location bTxt">h</div>
+            <div class="piece rook" color="white">
+                <img src="./assets/img/White-Rook.png" alt="Rook">
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+    <script src="./index.js"></script>
+</body>
+
+</html>
