@@ -1,8 +1,8 @@
 // Mes variables
 let boardBoxesArray = [];
+let moves = [];
+const castlingBoxes = ["g1", "g8", "c1", "c8"];
 let isWhiteTurn = true;
-let whiteKingBox = "e1";
-let blackKingBox = "e8";
 const boardBoxes = document.getElementsByClassName("box");
 const pieces = document.getElementsByClassName("piece");
 const piecesImages = document.getElementsByTagName("img");
@@ -11,11 +11,20 @@ setupBoardBoxes();
 setupPieces();
 fillBoardBoxesArray();
 
-function deepCopyArray(array) {
-  let arrayCopy = array.map((element) => {
-    return { ...element };
+function makeMove(
+  startingBoxId,
+  destinationBoxId,
+  pieceType,
+  pieceColor,
+  captured
+) {
+  moves.push({
+    from: startingBoxId,
+    to: destinationBoxId,
+    pieceType: pieceType,
+    pieceColor: pieceColor,
+    captured: captured,
   });
-  return arrayCopy;
 }
 
 function fillBoardBoxesArray() {
@@ -69,6 +78,12 @@ function updateBoardBoxesArray(
   currentBox.pieceId = "blank";
 }
 
+function deepCopyArray(array) {
+  let arrayCopy = array.map((element) => {
+    return { ...element };
+  });
+  return arrayCopy;
+}
 //****************Drag and drop******************** */
 
 function setupBoardBoxes() {
@@ -80,6 +95,50 @@ function setupBoardBoxes() {
     let box = boardBoxes[i];
     box.id = column + row;
   }
+}
+
+function performCastling(
+  piece,
+  pieceColor,
+  startingBoxId,
+  destinationBoxId,
+  boardBoxesArray
+) {
+  let rookId, rookDetinationBoxId, checkBoxId;
+  if (destinationBoxId == "g1") {
+    rookId = "rookh1";
+    rookDetinationBoxId = "f1";
+    checkBoxId = "f1";
+  } else if (destinationBoxId == "c1") {
+    rookId = "rooka1";
+    rookDetinationBoxId = "d1";
+    checkBoxId = "d1";
+  } else if (destinationBoxId == "g8") {
+    rookId = "rookh8";
+    rookDetinationBoxId = "f8";
+    checkBoxId = "f8";
+  } else if (destinationBoxId == "c8") {
+    rookId = "rooka8";
+    rookDetinationBoxId = "d8";
+    checkBoxId = "d8";
+  }
+  if (isKingInCheck(checkBoxId, pieceColor, boardBoxesArray)) return;
+  let rook = document.getElementById(rookId);
+  let rookDetinationBox = document.getElementById(rookDetinationBoxId);
+  rookDetinationBox.appendChild(rook);
+  updateBoardBoxesArray(
+    rook.id.slice(-2),
+    rookDetinationBox.id,
+    boardBoxesArray
+  );
+  const destinationBox = document.getElementById(destinationBoxId);
+  destinationBox.appendChild(piece);
+  isWhiteTurn = !isWhiteTurn;
+  updateBoardBoxesArray(startingBoxId, destinationBoxId, boardBoxesArray);
+  let captured = false;
+  makeMove(startingBoxId, destinationBoxId, "king", pieceColor, captured);
+  checkForCheckmate();
+  return;
 }
 
 function setupPieces() {
@@ -145,9 +204,6 @@ function drop(ev) {
   if (pieceType == "king") {
     let isCheck = isKingInCheck(destinationBoxId, pieceColor, boardBoxesArray);
     if (isCheck) return;
-    isWhiteTurn
-      ? (whiteKingBox = destinationBoxId)
-      : (blackKingBox = destinationBoxId);
   }
   let boxContent = getPieceAtBox(destinationBoxId, boardBoxesArray);
 
@@ -156,9 +212,36 @@ function drop(ev) {
     boxContent.pieceColor == "blank" &&
     legalBoxes.includes(destinationBoxId)
   ) {
+    let isCheck = false;
+    if (pieceType == "king")
+      isCheck = isKingInCheck(startingBoxId, pieceColor, boardBoxesArray);
+    if (
+      pieceType == "king" &&
+      !kingHasMoved(pieceColor) &&
+      castlingBoxes.includes(destinationBoxId) &&
+      !isCheck
+    ) {
+      performCastling(
+        piece,
+        pieceColor,
+        startingBoxId,
+        destinationBoxId,
+        boardBoxesArray
+      );
+      return;
+    }
+    if (
+      pieceType == "king" &&
+      !kingHasMoved(pieceColor) &&
+      castlingBoxes.includes(destinationBoxId) &&
+      isCheck
+    )
+      return;
     destinationBox.appendChild(piece);
     isWhiteTurn = !isWhiteTurn; // tour des joueurs
     updateBoardBoxesArray(startingBoxId, destinationBoxId, boardBoxesArray);
+    let captured = false;
+    makeMove(startingBoxId, destinationBoxId, pieceType, pieceColor, captured);
     checkForCheckmate();
     return;
   }
@@ -172,6 +255,8 @@ function drop(ev) {
     destinationBox.appendChild(piece);
     isWhiteTurn = !isWhiteTurn; // tour des joueurs
     updateBoardBoxesArray(startingBoxId, destinationBoxId, boardBoxesArray);
+    let captured = true;
+    makeMove(startingBoxId, destinationBoxId, pieceType, pieceColor, captured);
     checkForCheckmate();
     return;
   }
@@ -441,7 +526,64 @@ function getKingMoves(startingBoxId, pieceColor, boardBoxesArray) {
       legalBoxes.push(String.fromCharCode(currentFile + 97) + currentRank);
     }
   });
+  let shortCastleBox = isShortCastlePossible(pieceColor, boardBoxesArray);
+  let longCastleBox = isLongCastlePossible(pieceColor, boardBoxesArray);
+  if (shortCastleBox != "blank") legalBoxes.push(shortCastleBox);
+  if (longCastleBox != "blank") legalBoxes.push(longCastleBox);
   return legalBoxes;
+}
+
+function isShortCastlePossible(pieceColor, boardBoxesArray) {
+  let rank = pieceColor === "white" ? "1" : "8";
+  let fBox = boardBoxesArray.find((element) => element.boxId === `f${rank}`);
+  let gBox = boardBoxesArray.find((element) => element.boxId === `g${rank}`);
+  if (
+    fBox.pieceColor !== "blank" ||
+    gBox.pieceColor !== "blank" ||
+    kingHasMoved(pieceColor) ||
+    rookHasMoved(pieceColor, `h${rank}`)
+  ) {
+    return "blank";
+  }
+  return `g${rank}`;
+}
+
+function isLongCastlePossible(pieceColor, boardBoxesArray) {
+  let rank = pieceColor === "white" ? "1" : "8";
+  let dBox = boardBoxesArray.find((element) => element.boxId === `d${rank}`);
+  let cBox = boardBoxesArray.find((element) => element.boxId === `c${rank}`);
+  let bBox = boardBoxesArray.find((element) => element.boxId === `b${rank}`);
+
+  if (
+    dBox.pieceColor !== "blank" ||
+    cBox.pieceColor !== "blank" ||
+    bBox.pieceColor !== "blank" ||
+    kingHasMoved(pieceColor) ||
+    rookHasMoved(pieceColor, `a${rank}`)
+  ) {
+    return "blank";
+  }
+  return `c${rank}`;
+}
+
+function kingHasMoved(pieceColor) {
+  let result = moves.find(
+    (element) =>
+      element.pieceColor === pieceColor && element.pieceType === "king"
+  );
+  if (result != undefined) return true;
+  return false;
+}
+
+function rookHasMoved(pieceColor, startingBoxId) {
+  let result = moves.find(
+    (element) =>
+      element.pieceColor === pieceColor &&
+      element.pieceType === "rook" &&
+      element.from == startingBoxId
+  );
+  if (result != undefined) return true;
+  return false;
 }
 
 function moveToEighthRank(startingBoxId, pieceColor, boardBoxesArray) {
@@ -673,13 +815,23 @@ function isKingInCheck(boxId, pieceColor, boardBoxesArray) {
   return false;
 }
 
+function getkingLastMove(color) {
+  let kingLastMove = moves.find(
+    (element) => element.pieceType === "king" && element.pieceColor === color
+  );
+  if (kingLastMove == undefined) return isWhiteTurn ? "e1" : "e8";
+  return kingLastMove.to;
+}
+
 function isMoveValidAgainstCheck(
   legalBoxes,
   startingBoxId,
   pieceColor,
   pieceType
 ) {
-  let kingBox = isWhiteTurn ? whiteKingBox : blackKingBox;
+  let kingBox = isWhiteTurn
+    ? getkingLastMove("white")
+    : getkingLastMove("black");
   let boardBoxesArrayCopy = deepCopyArray(boardBoxesArray);
   let legalBoxesCopy = legalBoxes.slice();
   legalBoxesCopy.forEach((element) => {
@@ -703,7 +855,9 @@ function isMoveValidAgainstCheck(
 }
 
 function checkForCheckmate() {
-  let kingBox = isWhiteTurn ? whiteKingBox : blackKingBox;
+  let kingBox = isWhiteTurn
+    ? getkingLastMove("white")
+    : getkingLastMove("black");
   let pieceColor = isWhiteTurn ? "white" : "black";
   let boardBoxesArrayCopy = deepCopyArray(boardBoxesArray);
   let kingIsCheck = isKingInCheck(kingBox, pieceColor, boardBoxesArrayCopy);
@@ -746,7 +900,7 @@ function showAlert(message) {
   alert.innerHTML = message;
   alert.style.display = "block";
 
-  setTimeout(function() {
+  setTimeout(function () {
     alert.style.display = "none";
   }, 3000);
 }
