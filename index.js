@@ -3,29 +3,16 @@ let boardBoxesArray = [];
 let moves = [];
 const castlingBoxes = ["g1", "g8", "c1", "c8"];
 let isWhiteTurn = true;
+let enPassantBox = "blank";
+let allowMovement = true;
 const boardBoxes = document.getElementsByClassName("box");
 const pieces = document.getElementsByClassName("piece");
 const piecesImages = document.getElementsByTagName("img");
+const chessBoard = document.querySelector(".chessBoard");
 
 setupBoardBoxes();
 setupPieces();
 fillBoardBoxesArray();
-
-function makeMove(
-  startingBoxId,
-  destinationBoxId,
-  pieceType,
-  pieceColor,
-  captured
-) {
-  moves.push({
-    from: startingBoxId,
-    to: destinationBoxId,
-    pieceType: pieceType,
-    pieceColor: pieceColor,
-    captured: captured,
-  });
-}
 
 function fillBoardBoxesArray() {
   const boardBoxes = document.getElementsByClassName("box");
@@ -59,7 +46,8 @@ function fillBoardBoxesArray() {
 function updateBoardBoxesArray(
   currentBoxId,
   destinationBoxId,
-  boardBoxesArray
+  boardBoxesArray,
+  promotionOption = "blank"
 ) {
   let currentBox = boardBoxesArray.find(
     (element) => element.boxId === currentBoxId
@@ -68,14 +56,223 @@ function updateBoardBoxesArray(
     (element) => element.boxId === destinationBoxId
   );
   let pieceColor = currentBox.pieceColor;
-  let pieceType = currentBox.pieceType;
-  let pieceId = currentBox.pieceId;
+  let pieceType =
+    promotionOption == "blank" ? currentBox.pieceType : promotionOption;
+  let pieceId =
+    promotionOption == "blank"
+      ? currentBox.pieceId
+      : promotionOption + currentBox.pieceId;
   destinationBoxElement.pieceColor = pieceColor;
   destinationBoxElement.pieceType = pieceType;
   destinationBoxElement.pieceId = pieceId;
   currentBox.pieceColor = "blank";
   currentBox.pieceType = "blank";
   currentBox.pieceId = "blank";
+}
+
+function makeMove(
+  startingBoxId,
+  destinationBoxId,
+  pieceType,
+  pieceColor,
+  captured,
+  promotedTo = "blank"
+) {
+  moves.push({
+    from: startingBoxId,
+    to: destinationBoxId,
+    pieceType: pieceType,
+    pieceColor: pieceColor,
+    captured: captured,
+    promotedTo: promotedTo,
+  });
+}
+
+function performEnPassant(piece, pieceColor, startingBoxId, destinationBoxId) {
+  let file = destinationBoxId[0];
+  let rank = parseInt(destinationBoxId[1]);
+  rank += pieceColor === "white" ? -1 : 1;
+  let boxBehindId = file + rank;
+
+  const boxBehindElement = document.getElementById(boxBehindId);
+  while (boxBehindElement.firstChild) {
+    boxBehindElement.removeChild(boxBehindElement.firstChild);
+  }
+
+  let boxBehind = boardBoxesArray.find(
+    (element) => element.boxId === boxBehindId
+  );
+  boxBehind.pieceColor = "blank";
+  boxBehind.pieceType = "blank";
+  boxBehind.pieceId = "blank";
+
+  const destinationBox = document.getElementById(destinationBoxId);
+  destinationBox.appendChild(piece);
+  isWhiteTurn = !isWhiteTurn;
+  updateBoardBoxesArray(startingBoxId, destinationBoxId, boardBoxesArray);
+  let captured = true;
+  makeMove(startingBoxId, destinationBoxId, "pawn", pieceColor, captured);
+  checkForCheckmate();
+  return;
+}
+
+function displayPromotionChoices(
+  pieceId,
+  pieceColor,
+  startingBoxId,
+  destinationBoxId,
+  captured
+) {
+  let file = destinationBoxId[0];
+  let rank = parseInt(destinationBoxId[1]);
+  let rank1 = pieceColor === "white" ? rank - 1 : rank + 1;
+  let rank2 = pieceColor === "white" ? rank - 2 : rank + 2;
+  let rank3 = pieceColor === "white" ? rank - 3 : rank + 3;
+
+  let boxBehindId1 = file + rank1;
+  let boxBehindId2 = file + rank2;
+  let boxBehindId3 = file + rank3;
+
+  const destinationBox = document.getElementById(destinationBoxId);
+  const boxBehind1 = document.getElementById(boxBehindId1);
+  const boxBehind2 = document.getElementById(boxBehindId2);
+  const boxBehind3 = document.getElementById(boxBehindId3);
+
+  let piece1 = createChessPiece("queen", pieceColor, "promotionOption");
+  let piece2 = createChessPiece("knight", pieceColor, "promotionOption");
+  let piece3 = createChessPiece("rook", pieceColor, "promotionOption");
+  let piece4 = createChessPiece("bishop", pieceColor, "promotionOption");
+
+  destinationBox.appendChild(piece1);
+  boxBehind1.appendChild(piece2);
+  boxBehind2.appendChild(piece3);
+  boxBehind3.appendChild(piece4);
+
+  let promotionOptions = document.getElementsByClassName("promotionOption");
+  for (let i = 0; i < promotionOptions.length; i++) {
+    let pieceType = promotionOptions[i].classList[1];
+    promotionOptions[i].addEventListener("click", function () {
+      performPromotion(
+        pieceId,
+        pieceType,
+        pieceColor,
+        startingBoxId,
+        destinationBoxId,
+        captured
+      );
+    });
+  }
+}
+
+function createChessPiece(pieceType, color, pieceClass) {
+  let pieceName =
+    color.charAt(0).toUpperCase() +
+    color.slice(1) +
+    "-" +
+    pieceType.charAt(0).toUpperCase() +
+    pieceType.slice(1) +
+    ".png";
+  let pieceDiv = document.createElement("div");
+  pieceDiv.className = `${pieceClass} ${pieceType}`;
+  pieceDiv.setAttribute("color", color);
+  let img = document.createElement("img");
+  img.src = "assets/img/" + pieceName;
+  img.alt = pieceType;
+  pieceDiv.appendChild(img);
+  return pieceDiv;
+}
+
+chessBoard.addEventListener("click", clearPromotionOptions);
+
+function clearPromotionOptions() {
+  for (let i = 0; i < boardBoxes.length; i++) {
+    let style = getComputedStyle(boardBoxes[i]);
+    let backgroundColor = style.backgroundColor;
+    let rgbaColor = backgroundColor.replace("0.5)", "1)");
+    boardBoxes[i].style.backgroundColor = rgbaColor;
+    boardBoxes[i].style.opacity = 1;
+
+    if (boardBoxes[i].querySelector(".piece"))
+      boardBoxes[i].querySelector(".piece").style.opacity = 1;
+  }
+  let elementsToRemove = chessBoard.querySelectorAll(".promotionOption");
+  elementsToRemove.forEach(function (element) {
+    element.parentElement.removeChild(element);
+  });
+  allowMovement = true;
+}
+
+function updateBoardBoxesOpacity(startingBoxId) {
+  for (let i = 0; i < boardBoxes.length; i++) {
+    if (boardBoxes[i].id == startingBoxId)
+      boardBoxes[i].querySelector(".piece").style.opacity = 0;
+
+    if (!boardBoxes[i].querySelector(".promotionOption")) {
+      boardBoxes[i].style.opacity = 0.5;
+    } else {
+      let style = getComputedStyle(boardBoxes[i]);
+      let backgroundColor = style.backgroundColor;
+      let rgbaColor = backgroundColor
+        .replace("rgb", "rgba")
+        .replace(")", ",0.5)");
+      boardBoxes[i].style.backgroundColor = rgbaColor;
+
+      if (boardBoxes[i].querySelector(".piece"))
+        boardBoxes[i].querySelector(".piece").style.opacity = 0;
+    }
+  }
+}
+
+function performPromotion(
+  pieceId,
+  pieceType,
+  pieceColor,
+  startingBoxId,
+  destinationBoxId,
+  captured,
+  
+) {
+  clearPromotionOptions();
+  promotionPiece = pieceType;
+  piece = createChessPiece(pieceType, pieceColor, "piece");
+
+  piece.addEventListener("dragstart", drag);
+  piece.setAttribute("draggable", true);
+  piece.firstChild.setAttribute("draggable", false);
+  piece.id = pieceType + pieceId;
+
+  const startingBox = document.getElementById(startingBoxId);
+  while (startingBox.firstChild) {
+    startingBox.removeChild(startingBox.firstChild);
+  }
+  const destinationBox = document.getElementById(destinationBoxId);
+
+  if (captured) {
+    let children = destinationBox.children;
+    for (let i = 0; i < children.length; i++) {
+      if (!children[i].classList.contains("coordinate")) {
+        destinationBox.removeChild(children[i]);
+      }
+    }
+  }
+  destinationBox.appendChild(piece);
+  isWhiteTurn = !isWhiteTurn;
+  updateBoardBoxesArray(
+    startingBoxId,
+    destinationBoxId,
+    boardBoxesArray,
+    pieceType
+  );
+  makeMove(
+    startingBoxId,
+    destinationBoxId,
+    pieceType,
+    pieceColor,
+    captured,
+    pieceType
+  );
+  checkForCheckmate();
+  return;
 }
 
 function deepCopyArray(array) {
@@ -158,6 +355,7 @@ function allowDrop(ev) {
 }
 
 function drag(ev) {
+  if (!allowMovement) return;
   const piece = ev.target;
   const pieceColor = piece.getAttribute("color");
   const pieceType = piece.classList[1];
@@ -237,6 +435,29 @@ function drop(ev) {
       isCheck
     )
       return;
+
+    if (pieceType == "pawn" && enPassantBox == destinationBoxId) {
+      performEnPassant(piece, pieceColor, startingBoxId, destinationBoxId);
+      enPassantBox = "blank";
+      return;
+    }
+
+    if (
+      pieceType == "pawn" &&
+      (destinationBoxId.charAt(1) == 8 || destinationBoxId.charAt(1) == 1)
+    ) {
+      allowMovement = false;
+      displayPromotionChoices(
+        pieceId,
+        pieceColor,
+        startingBoxId,
+        destinationBoxId,
+        false
+      );
+      updateBoardBoxesOpacity(startingBoxId);
+      return;
+    }
+
     destinationBox.appendChild(piece);
     isWhiteTurn = !isWhiteTurn; // tour des joueurs
     updateBoardBoxesArray(startingBoxId, destinationBoxId, boardBoxesArray);
@@ -249,6 +470,21 @@ function drop(ev) {
     boxContent.pieceColor != "blank" &&
     legalBoxes.includes(destinationBoxId)
   ) {
+    if (
+      pieceType == "pawn" &&
+      (destinationBoxId.charAt(1) == 8 || destinationBoxId.charAt(1) == 1)
+    ) {
+      allowMovement = false;
+      displayPromotionChoices(
+        pieceId,
+        pieceColor,
+        startingBoxId,
+        destinationBoxId,
+        true
+      );
+      updateBoardBoxesOpacity(startingBoxId);
+      return;
+    }
     while (destinationBox.firstChild) {
       destinationBox.removeChild(destinationBox.firstChild);
     }
@@ -343,10 +579,41 @@ function checkPawnDiagonalCaptures(startingBoxId, pieceColor, boardBoxesArray) {
       const boxContent = currentBox.pieceColor;
       if (boxContent != "blank" && boxContent != pieceColor)
         legalBoxes.push(currentBoxId);
+      if (boxContent == "blank") {
+        currentBoxId = currentFile + rank;
+        let pawnStartingBoxRank = rankNumber + direction * 2;
+        let pawnStartingBoxId = currentFile + pawnStartingBoxRank;
+
+        if (enPassantPossible(currentBoxId, pawnStartingBoxId, direction)) {
+          let pawnStartingBoxRank = rankNumber + direction;
+          let enPassantBox = currentFile + pawnStartingBoxRank;
+          legalBoxes.push(enPassantBox);
+        }
+      }
     }
   }
   return legalBoxes;
 }
+
+function enPassantPossible(currentBoxId, pawnStartingBoxId, direction) {
+  if (moves.length == 0) return false;
+  let lastMove = moves[moves.length - 1];
+  if (
+    !(
+      lastMove.to === currentBoxId &&
+      lastMove.from === pawnStartingBoxId &&
+      lastMove.pieceType == "pawn"
+    )
+  )
+    return false;
+  file = currentBoxId[0];
+  rank = parseInt(currentBoxId[1]);
+  rank += direction;
+  let boxBehindId = file + rank;
+  enPassantBox = boxBehindId;
+  return true;
+}
+
 function checkPawnForwardMoves(startingBoxId, pieceColor, boardBoxesArray) {
   const file = startingBoxId.charAt(0);
   const rank = startingBoxId.charAt(1);
@@ -367,7 +634,8 @@ function checkPawnForwardMoves(startingBoxId, pieceColor, boardBoxesArray) {
     return legalBoxes;
   }
   legalBoxes.push(currentBoxId);
-  if (rankNumber != 2 && rankNumber != 7) return legalBoxes;
+  if (!((rankNumber == 2 && pieceColor == "white") || (rankNumber == 7 && pieceColor == "black"))) return legalBoxes;
+
 
   currentRank += direction;
   currentBoxId = currentFile + currentRank;
